@@ -1,120 +1,141 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "sort.h"
 #include "deck.h"
 
-/**
- * swap_next - swaps node with next node
- *
- * @deck: address of pointer to head
- * @node: node to swap
- */
-
-void swap_next(deck_node_t **deck, deck_node_t *node)
-{
-	node->next->prev = node->prev;
-	if (node->prev)
-		node->prev->next = node->next;
-	else
-		*deck = node->next;
-	node->prev = node->next;
-	node->next = node->next->next;
-	node->prev->next = node;
-	if (node->next)
-		node->next->prev = node;
-}
+int _strcmp(const char *s1, const char *s2);
+char get_value(deck_node_t *card);
+void insertion_sort_deck_kind(deck_node_t **deck);
+void insertion_sort_deck_value(deck_node_t **deck);
+void sort_deck(deck_node_t **deck);
 
 /**
- * deck_len - returns the length of a card deck
+ * _strcmp - Compares two strings.
+ * @s1: The first string to be compared.
+ * @s2: The second string to be compared.
  *
- * @h: head node to the deck
- *
- * Return: the size of the deck
+ * Return: Positive byte difference if s1 > s2
+ *         0 if s1 == s2
+ *         Negative byte difference if s1 < s2
  */
-
-size_t deck_len(const deck_node_t *h)
+int _strcmp(const char *s1, const char *s2)
 {
-	size_t cnt = 0;
-
-	while (h != NULL)
+	while (*s1 && *s2 && *s1 == *s2)
 	{
-		cnt++;
-		h = h->next;
+		s1++;
+		s2++;
 	}
 
-	return (cnt);
+	if (*s1 != *s2)
+		return (*s1 - *s2);
+	return (0);
 }
 
 /**
- * card_to_int - assigns a unique numeric value to each card
+ * get_value - Get the numerical value of a card.
+ * @card: A pointer to a deck_node_t card.
  *
- * @node: the card node to extract the value from
- *
- * Return: a unique card id
+ * Return: The numerical value of the card.
  */
-
-int card_to_int(deck_node_t *node)
+char get_value(deck_node_t *card)
 {
-	int i;
-	char *values[13] = {"Ace", "2", "3", "4", "5", "6", "7", "8", "9",
-			"10", "Jack", "Queen", "King"};
-
-	for (i = 0; i < 13; i++)
-	{
-		if (!strcmp(node->card->value, values[i]))
-			return (i + (13 * node->card->kind));
-	}
-
-	printf("Uh-oh. Card is out of range. I'm gonna crash now.");
-	exit(EXIT_FAILURE);
+	if (_strcmp(card->card->value, "Ace") == 0)
+		return (0);
+	if (_strcmp(card->card->value, "1") == 0)
+		return (1);
+	if (_strcmp(card->card->value, "2") == 0)
+		return (2);
+	if (_strcmp(card->card->value, "3") == 0)
+		return (3);
+	if (_strcmp(card->card->value, "4") == 0)
+		return (4);
+	if (_strcmp(card->card->value, "5") == 0)
+		return (5);
+	if (_strcmp(card->card->value, "6") == 0)
+		return (6);
+	if (_strcmp(card->card->value, "7") == 0)
+		return (7);
+	if (_strcmp(card->card->value, "8") == 0)
+		return (8);
+	if (_strcmp(card->card->value, "9") == 0)
+		return (9);
+	if (_strcmp(card->card->value, "10") == 0)
+		return (10);
+	if (_strcmp(card->card->value, "Jack") == 0)
+		return (11);
+	if (_strcmp(card->card->value, "Queen") == 0)
+		return (12);
+	return (13);
 }
 
 /**
- * sort_deck - sorts the deck with cocktail shaker
- *
- * @deck: the card deck to sort
+ * insertion_sort_deck_kind - Sort a deck of cards from spades to diamonds.
+ * @deck: A pointer to the head of a deck_node_t doubly-linked list.
  */
+void insertion_sort_deck_kind(deck_node_t **deck)
+{
+	deck_node_t *iter, *insert, *tmp;
 
+	for (iter = (*deck)->next; iter != NULL; iter = tmp)
+	{
+		tmp = iter->next;
+		insert = iter->prev;
+		while (insert != NULL && insert->card->kind > iter->card->kind)
+		{
+			insert->next = iter->next;
+			if (iter->next != NULL)
+				iter->next->prev = insert;
+			iter->prev = insert->prev;
+			iter->next = insert;
+			if (insert->prev != NULL)
+				insert->prev->next = iter;
+			else
+				*deck = iter;
+			insert->prev = iter;
+			insert = iter->prev;
+		}
+	}
+}
+
+/**
+ * insertion_sort_deck_value - Sort a deck of cards sorted from
+ *                             spades to diamonds from ace to king.
+ * @deck: A pointer to the head of a deck_node_t doubly-linked list.
+ */
+void insertion_sort_deck_value(deck_node_t **deck)
+{
+	deck_node_t *iter, *insert, *tmp;
+
+	for (iter = (*deck)->next; iter != NULL; iter = tmp)
+	{
+		tmp = iter->next;
+		insert = iter->prev;
+		while (insert != NULL &&
+		       insert->card->kind == iter->card->kind &&
+		       get_value(insert) > get_value(iter))
+		{
+			insert->next = iter->next;
+			if (iter->next != NULL)
+				iter->next->prev = insert;
+			iter->prev = insert->prev;
+			iter->next = insert;
+			if (insert->prev != NULL)
+				insert->prev->next = iter;
+			else
+				*deck = iter;
+			insert->prev = iter;
+			insert = iter->prev;
+		}
+	}
+}
+
+/**
+ * sort_deck - Sort a deck of cards from ace to king and
+ *             from spades to diamonds.
+ * @deck: A pointer to the head of a deck_node_t doubly-linked list.
+ */
 void sort_deck(deck_node_t **deck)
 {
-	int swapped = 1, val1, val2;
-	size_t lo = 0, hi = (deck_len(*deck) - 1), i = 0;
-	deck_node_t *tmp = *deck;
-
-	if (!deck || !(*deck) || !((*deck)->next))
+	if (deck == NULL || *deck == NULL || (*deck)->next == NULL)
 		return;
-	while (swapped)
-	{
-		swapped = 0;
-		for (; i < hi; i++)
-		{
-			val1 = card_to_int(tmp);
-			val2 = card_to_int(tmp->next);
-			if (val2 < val1)
-			{
-				swap_next(deck, tmp);
-				swapped = 1;
-			}
-			else
-				tmp = tmp->next;
-		}
-		if (!swapped)
-			break;
-		swapped = 0;
-		for (; i > lo; i--)
-		{
-			val1 = card_to_int(tmp);
-			val2 = card_to_int(tmp->prev);
-			if (val2 > val1)
-			{
-				swap_next(deck, tmp->prev);
-				swapped = 1;
-			}
-			else
-				tmp = tmp->prev;
-		}
-		hi -= 1;
-		lo += 1;
-	}
+
+	insertion_sort_deck_kind(deck);
+	insertion_sort_deck_value(deck);
 }
